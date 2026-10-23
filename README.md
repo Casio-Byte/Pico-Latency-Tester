@@ -9,6 +9,12 @@ results.
 
 ![Click-to-photon results](docs/images/click_to_photon.png)
 
+> **Two versions:**
+> - **This page - PC app version (v2):** a Pico / Pico W + sensor, driven by a Windows app with
+>   a built-in target, latency breakdown, scope and history.
+> - **[Standalone version (v3)](standalone/README.md):** no app. A Waveshare RP2040-LCD-0.96
+>   with its own screen, the sensor and one button.
+>
 > **Status:** the firmware compiles for the Pico's CPU, and the whole system has
 > been tested end to end against a simulated Pico (see [How it was tested](#how-it-was-tested)).
 > It has not yet been run on real hardware - issues and results welcome.
@@ -339,8 +345,9 @@ and `firmware/lib/` to the Pico with Thonny.
 ## Project layout
 
 ```
+standalone/                  v3: no PC app - see standalone/README.md
 firmware/
-  main.py                    Pico firmware
+  main.py                    Pico firmware (PC app version)
   lib/usb/device/            micropython-lib USB device + HID mouse (MIT)
 app/
   src/

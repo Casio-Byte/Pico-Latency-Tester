@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Latency Target</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+               font: 16px/1.5 system-ui, sans-serif; color: #888; }
+  #help { position: absolute; left: 24px; top: 20px; max-width: 34em; }
+  #help b { color: #ccc; }
+  body.flash { background: #fff; }
+  body.flash #help, body.running #help { display: none; }
+  body.running { cursor: none; }
+</style>
+</head>
+<body>
+<div id="help">
+  <b>Latency target</b> for the Pico latency tester.<br>
+  Press <b>F</b> for full screen, put the sensor anywhere on the screen,
+  leave the mouse pointer on this page, then press the tester's button.<br>
+  The page turns white while the mouse button is down. This text hides
+  after the first click. <b>Esc</b> leaves full screen.<br>
+  A browser adds its own delay; for the lowest numbers use a game or a
+  native full-screen app.
+</div>
+<script>
+  const b = document.body;
+  addEventListener('pointerdown', () => { b.classList.add('flash', 'running'); });
+  addEventListener('pointerup',   () => { b.classList.remove('flash'); });
+  addEventListener('contextmenu', e => e.preventDefault());
+  addEventListener('keydown', e => {
+    if (e.key === 'f' || e.key === 'F') document.documentElement.requestFullscreen?.();
+  });
+</script>
+</body>
+</html>
