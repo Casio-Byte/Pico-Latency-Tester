@@ -31,6 +31,35 @@ Wiring:
 
 The screen is built in. Don't connect anything to GP8-GP12 or GP25 - the screen uses them.
 
+## Case
+
+A 3D-printed case, about 56 x 26 x 13 mm, in [`case/`](case/): the screen
+looks out of the lid, the light sensor looks out of the flat back, so you hold
+the back against the monitor.
+
+| Assembled | Inside | Back |
+|---|---|---|
+| ![Closed](../docs/images/case/closed.png) | ![Open](../docs/images/case/open.png) | ![Back](../docs/images/case/back.png) |
+
+- **`latency_v3_base.stl`** - the board rests on a 2 mm ledge round the inside
+  (with gaps where the button legs and sensor wires are soldered underneath);
+  open slot in the end wall for the USB-C plug; sensor pocket under the board.
+- **`latency_v3_lid.stl`** - screen window, hole for the button, rails that
+  hold the board down. Push fit, no screws. Already face-down for printing.
+- **`latency_tester_v3_case.scad`** - the OpenSCAD source; every size is a
+  setting at the top.
+
+Print both flat side down, no supports. The button is soldered straight onto
+the board (legs in pins 21 and 23, body towards the middle) and its stem comes
+up through the lid. The ALS-PT19 breakout goes chip-down into the pocket: it
+rests on a ledge, the chip sits in a recess over a 2 mm light hole, and a peg
+through its mounting hole lines it up.
+
+Waveshare only publishes the board drawing as an image, so measure your board
+and change these in the `.scad` if they differ: `scr_x` (USB end to the screen
+centre), `btn_x` / `btn_y` (button stem), `tact_h` (button height), `under`
+(4 mm under the board - set 9.5 if your board has header pins).
+
 ## Install
 
 1. Hold **BOOT** and plug the board in. In Thonny: *Install MicroPython* ->
@@ -137,6 +166,7 @@ lt_app.py        the app: one-button menus, runs, results, scope, flicker, histo
 lt_hw.py         hardware: viper timing loops, ADC, button, USB mouse, files
 lt_display.py    ST7735S driver for the built-in 160x80 screen
 target.html      a simple click target for the PC
+case/            3D-printed case: STLs + OpenSCAD source
 compiled/        pre-compiled .mpy versions (build_mpy.sh)
 tests/sim_standalone.py   runs lt_app.py on a simulated board, saves screenshots
 ```
