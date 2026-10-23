@@ -101,9 +101,9 @@ def _signed30(x):
 
 class HW:
     """The real board: Waveshare RP2040-LCD-0.96 (or any RP2040 Pico),
-    ALS-PT19 on GP26, push button from GP15 to GND."""
+    ALS-PT19 on GP26, push button from GP16 (pin 21) to GND (pin 23)."""
 
-    def __init__(self, button_pin=15, sensor_adc=26):
+    def __init__(self, button_pin=16, sensor_adc=26):
         import sys
         if "RP2040" not in sys.implementation._machine:
             raise RuntimeError("needs an RP2040 board")

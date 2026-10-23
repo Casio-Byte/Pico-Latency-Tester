@@ -1,5 +1,5 @@
 # Latency tester v3 - standalone (no PC app needed).
-# Waveshare RP2040-LCD-0.96 + Adafruit ALS-PT19 on GP26 + one push button GP15->GND.
+# Waveshare RP2040-LCD-0.96 + Adafruit ALS-PT19 on GP26 + one push button GP16->GND (pins 21 + 23).
 #
 # Hold the button while plugging in = maintenance mode (no USB mouse, Thonny can
 # connect). BOOTSEL works too.
@@ -13,7 +13,7 @@ machine.freq(200_000_000)
 import lt_display
 import lt_hw
 
-btn = Pin(15, Pin.IN, Pin.PULL_UP)
+btn = Pin(16, Pin.IN, Pin.PULL_UP)
 time.sleep_ms(50)
 maintenance = btn.value() == 0 or rp2.bootsel_button()
 
@@ -28,7 +28,7 @@ if maintenance:
     raise SystemExit
 
 try:
-    hw = lt_hw.HW(button_pin=15, sensor_adc=26)
+    hw = lt_hw.HW(button_pin=16, sensor_adc=26)
 except RuntimeError as e:
     fb.fill(0)
     fb.text("Needs an RP2040", 20, 30, lt_display.rgb(255, 70, 70))

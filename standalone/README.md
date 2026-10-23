@@ -27,7 +27,7 @@ Wiring:
 | ALS-PT19 `+` | 3V3 (pin 36) |
 | ALS-PT19 `-` | AGND (pin 33) |
 | ALS-PT19 `OUT` | GP26 (pin 31) |
-| Button | GP15 (pin 20) and GND (pin 18) - two diagonal legs on a 4-leg switch |
+| Button | GP16 (pin 21) and GND (pin 23) - two diagonal legs on a 4-leg switch |
 
 The screen is built in. Don't connect anything to GP8-GP12 or GP25 - the screen uses them.
 
