@@ -1,0 +1,5 @@
+app/build/
+app/third_party/
+app/src/firmware_files.h
+__pycache__/
+*.mpy
