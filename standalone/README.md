@@ -54,8 +54,8 @@ If the picture is upside down, use *Flip screen* in the menu.
 2. Put the sensor flat on the screen where the change happens, and leave the
    mouse pointer over the target.
 3. **Press** the button. During the countdown, switch to the target window.
-4. The tester makes one long calibration click, two warm-up clicks, then the
-   timed clicks at random intervals. **Press** to stop early.
+4. The tester makes two warm-up clicks (plus one long calibration click on
+   *Trigger: Auto*), then the timed clicks at random intervals. **Press** to stop early.
 5. Results: **press** to page through median, histogram, every click and detail;
    **hold** to go back.
 
@@ -68,15 +68,15 @@ If the picture is upside down, use *Flip screen* in the menu.
 | Item | What it does |
 |---|---|
 | Start run | Same as pressing the button on the home screen |
-| Manual test | **The button becomes the mouse button.** Each press clicks and is timed from the moment the contacts close. Hold 2 s to finish |
-| Response scope | One click recorded at 200,000 samples/s: 50% point and 10->90% pixel response time, drawn as a graph |
-| Flicker test | 190 ms of steady light: PWM backlight frequency and depth, or "no flicker" |
-| Sensor view | Live sensor graph, to position the sensor |
-| Last results / History | The last run again; a list of every run's median |
+| Response scope | Countdown, then one click recorded at 200,000 samples/s: 50% point and 10->90% pixel response time, drawn as a graph |
+| Flicker test | Countdown, then holds the mouse button down so the target turns white and records 190 ms of light: PWM backlight frequency and depth, "no flicker", or "too dark" if the sensor sees no light |
+| Sensor view | Live sensor graph, redrawn continuously, to position the sensor. **Press** sends a click so you can see the jump; **hold** goes back |
+| Last results | The last run again |
+| History | Every run, newest first. **Press** moves down, **hold** opens a run (median, average, spread, 95th, fails). *Clear history* at the end of the list deletes them all (hold again to confirm) |
 | Clicks | 20 / 50 / 100 / 200 / 500 |
 | Countdown | 0 / 3 / 5 / 10 s |
 | Detect | Either / Brighter / Darker - which way the screen changes |
-| Trigger | **Auto** (calibrates from the screen), or a fixed Small / Medium / Large change |
+| Trigger | **Small** (default, the most sensitive fixed trigger), Medium, Large, or **Auto** (calibrates from the screen with one long click) |
 | Hold | How long each click is held: 40 / 60 / 100 / 200 ms |
 | Gap | Random pause between clicks: Fast 150-300 / Normal 250-600 / Slow 500-1000 ms |
 | Mouse | Left or right button |
@@ -86,11 +86,17 @@ Settings are saved on the board. Each run is also saved as files you can read
 with Thonny: `history.csv` (one summary line per run) and `last_run.csv`
 (every click of the last run).
 
-| Manual mode | Response scope | Flicker |
+| Response scope | Flicker | Sensor view |
 |---|---|---|
-| ![Manual](../docs/images/standalone/12_manual_after_5.png) | ![Scope](../docs/images/standalone/14_response_scope.png) | ![Flicker](../docs/images/standalone/15_flicker.png) |
+| ![Scope](../docs/images/standalone/14_response_scope.png) | ![Flicker](../docs/images/standalone/15_flicker.png) | ![Sensor](../docs/images/standalone/16_sensor_view.png) |
+| ![No flicker](../docs/images/standalone/15b_flicker_none.png) | ![History](../docs/images/standalone/17b_history_run.png) | ![Clear](../docs/images/standalone/17d_history_confirm.png) |
 
 ## How detection works
+
+By default (**Trigger: Small**) a click counts as seen as soon as the sensor
+moves 40 counts (of 4095) from its level just before the click - the earliest
+reliable sign the screen has started to change. Medium and Large need a bigger
+change, which suits noisy scenes.
 
 With **Trigger: Auto**, the first click is held for 300 ms while the tester
 records how far the sensor reading moves. The trigger is set to half that
@@ -148,9 +154,10 @@ board:
 - a framebuffer using MicroPython's own 8x8 font, so the screenshots on this
   page are pixel-for-pixel what the board draws
 
-The script walks through 65 steps: a 100-click run and all results pages, the
-menu and a setting change, manual mode (including discarding the press used to
-finish), the response scope, flicker test, sensor view, history, flipping the
+The script walks through 84 steps: a 100-click run and all results pages, the
+menu and the default trigger, the response scope, the flicker test on a
+flickering, a steady and a dark screen, sensor view with a click, history
+(opening a run, clearing), flipping the
 screen, and a run where the sensor sees nothing. The measured median matched
 the model (17.8 ms true average + the 1 ms to reach the 50% point of the 2 ms
 transition = 18.8 ms measured). All modules also compile with

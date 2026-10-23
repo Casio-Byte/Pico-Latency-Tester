@@ -175,6 +175,8 @@ class FakeHW:
     def level_at(self, t):
         if self.scene == "dead":
             return 600
+        if self.scene == "dark":
+            return 40
         if self.scene == "pwm":
             return 2400 + (600 if (t // 2083) % 2 else -600)
         import bisect
@@ -233,20 +235,6 @@ class FakeHW:
 
     def trial(self, delta, dirn, timeout_us, confirm, button):
         base = self.adc_avg(6)
-        t0 = self.t
-        self.press(True, button)
-        self.t += 40
-        ts = self.t
-        t1 = self._wait_change(base, delta, dirn, t0, timeout_us, confirm)
-        return base, t0 & 0x3FFFFFFF, t1, ts & 0x3FFFFFFF
-
-    def manual_trial(self, delta, dirn, timeout_us, confirm, button, chunk_us):
-        base = self.adc_avg(4)
-        nxt = [a for a, b in self.presses if a <= self.t + chunk_us and b > self.t]
-        if not nxt:
-            self._adv(chunk_us)
-            return None
-        self.t = max(self.t, min(nxt))
         t0 = self.t
         self.press(True, button)
         self.t += 40
@@ -374,7 +362,7 @@ def main():
     outdir = sys.argv[2]
     os.makedirs(outdir, exist_ok=True)
     hw = FakeHW()
-    def menu_to(cur, target, total=16):
+    def menu_to(cur, target, total=15):
         out = []
         k = cur
         while k != target:
@@ -391,30 +379,41 @@ def main():
         ("EVERY CLICK", "short", "06_results_every_click"),
         ("DETAIL", "long", "07_results_detail"),
         ("Press: start", "long", None),
-        ("1/16", None, "08_menu"),
+        ("1/15", None, "08_menu"),
     ]
-    steps += menu_to(1, 8)
-    steps += [("8/16", "long", "09_menu_clicks"),
+    steps += menu_to(1, 10)
+    steps += [("Trigger: Small", None, "08b_menu_trigger_default")]
+    steps += menu_to(10, 7)
+    steps += [("7/15", "long", "09_menu_clicks"),
               ("Clicks: 200", None, "10_menu_clicks_changed")]
-    steps += menu_to(8, 2)
-    steps += [("2/16", "long", None),
-              ("Press = click", "short", "11_manual_ready")]
-    for k in range(1, 5):
-        steps += [("MANUAL  %d" % k, "short", None)]
-    steps += [("MANUAL  5", ("hold", 2300), "12_manual_after_5"),
-              ("MEDIAN", "long", "13_manual_results")]
-    steps += menu_to(2, 3)
-    steps += [("3/16", "long", None), ("50%", "long", "14_response_scope")]
-    steps += [("3/16", [("scene", "pwm"), "short"], None), ("4/16", "long", None),
-              ("Hz", [("scene", "target"), "long"], "15_flicker")]
-    steps += menu_to(4, 5)
-    steps += [("5/16", "long", None), ("SENSOR", "long", "16_sensor_view")]
-    steps += menu_to(5, 7)
-    steps += [("7/16", "long", None), ("HISTORY", "long", "17_history")]
-    steps += menu_to(7, 15)
-    steps += [("15/16", "long", None), ("15/16", "long", "18_flipped_menu")]
-    steps += menu_to(15, 16)
-    steps += [("16/16", "long", None),
+    steps += menu_to(7, 2)
+    steps += [("2/15", "long", None),
+              ("Switch to the target", None, "13_scope_countdown"),
+              ("50%", "long", "14_response_scope")]
+    # flicker: PWM screen, then a plain screen (no flicker), then a dark one
+    steps += [("2/15", [("scene", "pwm"), "short"], None), ("3/15", "long", None),
+              ("Switch to the target", None, None),
+              ("Hz", [("scene", "target"), "short"], "15_flicker"),
+              ("NO FLICKER", [("scene", "dark"), "short"], "15b_flicker_none"),
+              ("TOO DARK", "long", "15c_flicker_dark"),
+              ("3/15", ("scene", "target"), None)]
+    steps += menu_to(3, 4)
+    steps += [("4/15", "long", None), ("SENSOR", "short", None),
+              ("CLICK", None, "16_sensor_view"),
+              ("SENSOR", "long", None)]
+    steps += menu_to(4, 6)
+    steps += [("6/15", "long", None),
+              ("HISTORY  1 runs", "long", "17_history"),
+              ("RUN #1", "short", "17b_history_run"),
+              ("HISTORY  1 runs", "short", None),
+              ("Clear history", "long", "17c_history_clear_selected"),
+              ("CLEAR HISTORY?", "long", "17d_history_confirm"),
+              ("HISTORY  0 runs", "short", "17e_history_cleared"),
+              ("HISTORY  0 runs", "long", None)]
+    steps += menu_to(6, 14)
+    steps += [("14/15", "long", None), ("14/15", "long", "18_flipped_menu")]
+    steps += menu_to(14, 15)
+    steps += [("15/15", "long", None),
               ("Press: start 200", [("scene", "dead"), "short"], "19_home_after"),
               ("NO CHANGE SEEN", "short", "20_no_change"),
               ("NO RESULTS", "short", None),

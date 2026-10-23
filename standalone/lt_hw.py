@@ -16,6 +16,7 @@ import micropython
 from machine import ADC, Pin, mem32
 
 MASK30 = const(0x3FFFFFFF)
+CAP_MAX = const(16000)
 
 
 @micropython.viper
@@ -77,19 +78,6 @@ def wait_change(base: int, delta: int, dirn: int, t0: int, timeout: int, confirm
 
 
 @micropython.viper
-def wait_press(mask: int, chunk_us: int) -> int:
-    """Spin until the button (active low) reads pressed. Returns the time of
-    contact, or -1 after chunk_us so the USB stack can run in between."""
-    gin = ptr32(0xd0000004)
-    tmr = ptr32(0x40054028)
-    start = tmr[0]
-    while gin[0] & mask:
-        if tmr[0] - start > chunk_us:
-            return -1
-    return tmr[0] & 0x3FFFFFFF
-
-
-@micropython.viper
 def capture(buf, start: int, n: int, period: int, out):
     p = ptr16(buf)
     o = ptr32(out)
@@ -128,6 +116,11 @@ class HW:
         self._out = array.array("I", [0, 0])
         self._lvl = array.array("H", [0] * 256)
         self.mouse = None
+        # One capture buffer for the scope and flicker tests, made now while
+        # memory is unfragmented (allocating 32 KB later can fail).
+        gc.collect()
+        self._cap = array.array("H", bytearray(CAP_MAX * 2))  # bytearray = raw memory
+        gc.collect()
         self.now_us = now_us
         self.adc_now = adc_now
         self.adc_avg = adc_avg
@@ -195,29 +188,12 @@ class HW:
         gc.enable()
         return base, t0, t1, ts
 
-    def manual_trial(self, delta, dirn, timeout_us, confirm, button, chunk_us):
-        """Wait (up to chunk_us) for the button; on press, click the mouse and
-        time from contact to light. None if not pressed in time."""
-        base = adc_avg(4)
-        gc.collect()
-        gc.disable()
-        t0 = wait_press(self._mask, chunk_us)
-        if t0 < 0:
-            gc.enable()
-            return None
-        self.press(True, button)
-        ts = now_us()
-        t1 = wait_change(base, delta, dirn, t0, timeout_us, confirm)
-        gc.enable()
-        return base, t0, t1, ts
-
     def capture(self, n, period, pre, click, button):
         """High-speed capture around a click. Returns (samples, pre_rel_us,
-        post_rel_us); sample i<pre at pre_rel+i*period, else post_rel+(i-pre)*period."""
-        gc.collect()
-        raw = bytearray(n * 2)
-        buf = array.array("H", raw)            # a bytearray initialiser is copied as raw memory
-        del raw
+        post_rel_us); sample i<pre at pre_rel+i*period, else post_rel+(i-pre)*period.
+        The samples array is reused by the next capture."""
+        n = min(n, CAP_MAX)
+        buf = self._cap
         gc.collect()
         gc.disable()
         capture(buf, 0, pre, period, self._out)

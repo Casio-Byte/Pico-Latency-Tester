@@ -7,7 +7,7 @@
 # also runs against a simulated board for testing.
 import json
 
-VERSION = "3.0"
+VERSION = "3.1"
 SETTINGS_FILE = "settings.json"
 HISTORY_FILE = "history.csv"
 LAST_FILE = "last_run.csv"
@@ -27,8 +27,8 @@ TIMEOUT_US = 500000
 CONFIRM = 3
 WARMUP = 2
 
-DEFAULTS = {"clicks": 2, "countdown": 2, "detect": 0, "trigger": 0, "hold": 1, "gap": 1,
-            "button": 0, "flip": 0, "last_median": -1.0, "runs": 0}
+DEFAULTS = {"clicks": 2, "countdown": 2, "detect": 0, "trigger": 1, "hold": 1, "gap": 1,
+            "button": 0, "flip": 0, "last_median": -1.0, "runs": 0, "cfg_ver": 2}
 
 
 # ---------------------------------------------------------------- stats
@@ -98,22 +98,43 @@ def analyze_response(samples, period, pre, pre_rel, post_rel):
 
 
 def analyze_flicker(samples, period):
-    s = sorted(samples)
-    lo = pct(s, 1)
-    hi = pct(s, 99)
-    mean = sum(samples) / len(samples)
+    """PWM frequency and depth. Uses a 4096-bin count instead of sorting the
+    samples - a sorted copy of 16000 samples needs ~64 KB and ran the board
+    out of memory."""
+    n = len(samples)
+    if n < 100:
+        return {"ok": False, "msg": "No samples"}
+    cnt = [0] * 4096
+    total = 0
+    for v in samples:
+        cnt[v] += 1
+        total += v
+    mean = total / n
+
+    def level_at(p):
+        want = p * n // 100
+        acc = 0
+        for i in range(4096):
+            acc += cnt[i]
+            if acc > want:
+                return i
+        return 4095
+
+    lo = level_at(1)
+    hi = level_at(99)
+    del cnt
     if hi + lo <= 0:
         return {"ok": False, "msg": "Sensor reads 0"}
     depth = (hi - lo) / (hi + lo) * 100
     pp = hi - lo
     if pp < 24 or depth < 1.5:
-        return {"ok": True, "flicker": False, "depth": depth, "hz": 0}
+        return {"ok": True, "flicker": False, "depth": depth, "hz": 0, "level": int(mean)}
     up = mean + pp * 0.15
     dn = mean - pp * 0.15
     above = samples[0] > mean
     count = 0
     first = last = 0
-    for i in range(1, len(samples)):
+    for i in range(1, n):
         v = samples[i]
         if not above and v > up:
             above = True
@@ -125,8 +146,8 @@ def analyze_flicker(samples, period):
             above = False
     if count >= 3 and last > first:
         hz = (count - 1) / ((last - first) * period / 1e6)
-        return {"ok": True, "flicker": True, "depth": depth, "hz": hz}
-    return {"ok": True, "flicker": False, "depth": depth, "hz": 0}
+        return {"ok": True, "flicker": True, "depth": depth, "hz": hz, "level": int(mean)}
+    return {"ok": True, "flicker": False, "depth": depth, "hz": 0, "level": int(mean)}
 
 
 # ---------------------------------------------------------------- button
@@ -208,6 +229,9 @@ class App:
                 for k in DEFAULTS:
                     if k in d:
                         self.cfg[k] = d[k]
+                if d.get("cfg_ver", 1) < 2:
+                    self.cfg["trigger"] = DEFAULTS["trigger"]
+                    self.cfg["cfg_ver"] = DEFAULTS["cfg_ver"]
             except ValueError:
                 pass
 
@@ -320,7 +344,6 @@ class App:
         c = self.cfg
         return [
             ("Start run", self.run_auto),
-            ("Manual test", self.run_manual),
             ("Response scope", self.scope),
             ("Flicker test", self.flicker),
             ("Sensor view", self.sensor_view),
@@ -370,7 +393,12 @@ class App:
                 self.cfg[key] = (self.cfg[key] + 1) % n
                 self.save_settings()
                 continue
-            act()
+            try:
+                act()
+            except MemoryError:
+                self.hw.press(False, self.cfg["button"] + 1)
+                self.hw.collect()
+                self.message("OUT OF MEMORY", "Try again", "or replug the board", self.RED)
             self.btn.reset()
             if label == "Start run":
                 return
@@ -590,61 +618,6 @@ class App:
             self.fb.fill_rect(x, y, 2, 2, self.CYAN)
         self.text("%.1f-%.1f ms" % (lo, hi), 2, 70, self.GREY)
 
-    # ---------------- manual mode: the button is the mouse
-    def run_manual(self):
-        hw = self.hw
-        self.wait_release()
-        if not hw.usb_ready():
-            self.message("NO USB", "Plug into the PC", "", self.RED)
-            return
-        avg, lo, hi = hw.level()
-        fixed = TRIGGER_OPTS[self.cfg["trigger"]][1]
-        delta = fixed if fixed else max(25, (hi - lo) * 3 + 15)
-        dirn = DETECT_OPTS[self.cfg["detect"]][1]
-        btn = self.cfg["button"] + 1
-        res = []
-        fails = 0
-        failed = False
-        while True:
-            self.clear()
-            self.header("MANUAL  %d" % len(res))
-            if failed:
-                self.big("--", 16, self.RED)
-            elif res:
-                self.big("%.1f" % res[-1], 16, self.WHITE)
-            else:
-                self.ctext("Press = click", 22)
-            if res:
-                self.ctext("med %.2f ms" % pct(sorted(res), 50), 50, self.YELLOW)
-            self.footer("hold 2s = finish")
-            self.show()
-            r = None
-            while r is None:
-                r = hw.manual_trial(delta, dirn, TIMEOUT_US, CONFIRM, btn, 20000)
-            base, t0, t1, ts = r
-            failed = t1 < 0
-            if failed:
-                fails += 1
-            else:
-                res.append(delta30(t1, t0) / 1000)
-            t_down = hw.ms()
-            long_hold = False
-            while hw.pressed():
-                if hw.diff_ms(hw.ms(), t_down) > 2000:
-                    long_hold = True
-                hw.sleep_ms(5)
-            hw.press(False, btn)
-            hw.sleep_ms(30)
-            if long_hold:
-                if not failed and res:
-                    res.pop()                # the finishing press isn't a measurement
-                elif failed:
-                    fails -= 1
-                break
-        self.btn.reset()
-        if res:
-            self.finish(res, fails, "manual", False)
-
     # ---------------- response scope
     def scope(self):
         hw = self.hw
@@ -695,8 +668,10 @@ class App:
                 lo = v
             if v > hi:
                 hi = v
-        if hi - lo < 20:
-            hi = lo + 20
+        if hi - lo < 100:                    # flat signal: don't blow noise up
+            mid = (hi + lo) // 2
+            lo = mid - 50
+            hi = mid + 50
         y0, h = 68, 54
         col = [None] * W
         for i in range(0, n, 2):
@@ -729,23 +704,35 @@ class App:
 
     # ---------------- flicker
     def flicker(self):
+        """Holds the mouse button down (so the target page is white), waits for
+        the screen to settle, then records 192 ms of light at 12 us steps."""
         hw = self.hw
         self.wait_release()
+        btn = self.cfg["button"] + 1
         while True:
+            if not self.countdown("FLICKER TEST"):
+                return
             self.clear()
             self.header("FLICKER TEST")
-            self.ctext("Sensor on a bright", 22, self.GREY)
-            self.ctext("part of the screen", 32, self.GREY)
-            self.ctext("Capturing...", 50)
+            self.ctext("Capturing...", 34)
             self.show()
+            click = hw.usb_ready()
             n, period = 16000, 12
-            buf, pre_rel, post_rel = hw.capture(n, period, 0, False, 1)
+            try:
+                if click:
+                    hw.press(True, btn)
+                    hw.sleep_ms(250)          # let the target turn white
+                buf, pre_rel, post_rel = hw.capture(n, period, 0, False, btn)
+            finally:
+                hw.press(False, btn)
             r = analyze_flicker(buf, period)
             self.clear()
             if not r["ok"]:
                 self.header(r["msg"], self.RED)
             elif r["flicker"]:
                 self.header("%.0f Hz  %.0f%% PWM" % (r["hz"], r["depth"]), self.ORANGE)
+            elif r["level"] < 300:
+                self.header("TOO DARK  %d" % r["level"], self.RED)
             else:
                 self.header("NO FLICKER %.1f%%" % r["depth"], self.GREEN)
             self.wave(buf, period, 0, pre_rel, post_rel, None, 0, 20)
@@ -758,34 +745,55 @@ class App:
 
     # ---------------- live sensor
     def sensor_view(self):
+        """Live graph, redrawn every sample. Press sends a click (so you can
+        see the screen change); hold goes back."""
         hw = self.hw
         self.wait_release()
+        btn = self.cfg["button"] + 1
         hist = []
-        while True:
-            hist.append(hw.adc_avg(6))
-            if len(hist) > W:
-                hist.pop(0)
-            if len(hist) % 3 == 0:
+        up_at = None
+        try:
+            while True:
+                v = hw.adc_avg(6)
+                hist.append(v)
+                if len(hist) > W:
+                    hist.pop(0)
                 lo = min(hist)
                 hi = max(hist)
                 span = max(40, hi - lo)
                 mid = (hi + lo) / 2
                 self.clear()
-                self.header("SENSOR  %d" % hist[-1])
-                self.text("0-4095", W - 50, 2, self.GREY)
-                for x in range(1, len(hist)):
-                    y1 = 41 - int((hist[x - 1] - mid) / span * 52)
-                    y2 = 41 - int((hist[x] - mid) / span * 52)
-                    self.fb.line(x - 1, y1, x, y2, self.CYAN)
-                self.footer("press = back")
+                self.header("SENSOR  %d" % v)
+                rng = "%d-%d" % (lo, hi)
+                self.text(rng, W - 8 * len(rng) - 2, 14, self.GREY)
+                prev = None
+                for x in range(len(hist)):
+                    y = 45 - int((hist[x] - mid) / span * 40)
+                    if prev is not None:
+                        self.fb.line(x - 1, prev, x, y, self.CYAN)
+                    prev = y
+                self.fb.vline(len(hist) - 1, 13, 56, self.DARK)
+                if up_at is not None:
+                    self.text("CLICK", 2, 14, self.YELLOW)
+                self.footer("tap=click hold=back")
                 self.show()
-            e = self.btn.poll()
-            if e:
-                return
-            hw.sleep_ms(10)
+                e = self.btn.poll()
+                if e == "long":
+                    return
+                now = hw.ms()
+                if e == "short" and up_at is None and hw.usb_ready():
+                    hw.press(True, btn)
+                    up_at = now + 400
+                if up_at is not None and hw.diff_ms(now, up_at) >= 0:
+                    hw.press(False, btn)
+                    up_at = None
+                hw.sleep_ms(4)
+        finally:
+            hw.press(False, btn)
+            self.wait_release()
 
     # ---------------- history
-    def history(self):
+    def history_rows(self):
         txt = self.hw.read_file(HISTORY_FILE)
         rows = []
         if txt:
@@ -793,26 +801,81 @@ class App:
                 p = line.split(",")
                 if len(p) >= 9:
                     rows.append(p)
-        if not rows:
-            self.message("HISTORY", "No runs yet")
-            return
-        rows.reverse()
-        top = 0
+        rows.reverse()                       # newest first
+        return rows
+
+    def history(self):
+        """Newest run first. Press = next line, hold = open it. The last two
+        lines are Clear history and Back."""
+        rows = self.history_rows()
+        sel = 0
         while True:
+            items = len(rows) + 2            # + Clear, Back
+            sel %= items
             self.clear()
             self.header("HISTORY  %d runs" % len(rows))
-            for i in range(5):
-                if top + i >= len(rows):
+            top = min(max(0, sel - 2), max(0, items - 5))
+            for row in range(5):
+                i = top + row
+                if i >= items:
                     break
-                p = rows[top + i]
-                self.text("#%-3s %6.2f n%s" % (p[0], float(p[3]), p[1]), 2, 14 + i * 11,
-                          self.WHITE if i == 0 else self.GREY)
-            self.footer("press=more hold=back")
+                y = 13 + row * 11
+                if i == sel:
+                    self.fb.fill_rect(0, y - 1, W, 10, self.BLUE)
+                c = self.WHITE if i == sel else self.GREY
+                if i < len(rows):
+                    p = rows[i]
+                    self.text("#%-3s %6.2fms n%s" % (p[0], float(p[3]), p[1]), 2, y, c)
+                elif i == len(rows):
+                    self.text("Clear history", 2, y, self.RED if i != sel else self.WHITE)
+                else:
+                    self.text("Back", 2, y, c)
+            self.footer("press=next hold=ok")
             self.show()
             e = self.wait_event(timeout_ms=60000)
-            if e != "short":
+            if e is None:
                 return
-            top = top + 5 if top + 5 < len(rows) else 0
+            if e == "short":
+                sel += 1
+                continue
+            if sel < len(rows):
+                self.history_detail(rows[sel])
+            elif sel == len(rows):
+                if self.confirm_clear():
+                    rows = []
+                    sel = 0
+            else:
+                return
+
+    def history_detail(self, p):
+        self.clear()
+        self.header("RUN #%s" % p[0], self.GREEN)
+        self.text("median %.2f ms" % float(p[3]), 2, 14, self.GREEN)
+        self.text("avg %.2f sd %.2f" % (float(p[4]), float(p[5])), 2, 25)
+        self.text("min %.1f max %.1f" % (float(p[6]), float(p[7])), 2, 36)
+        self.text("95th %.2f" % float(p[8]), 2, 47)
+        self.text("n%s fail%s" % (p[1], p[2]), 2, 58, self.GREY)
+        if len(p) > 9:
+            self.text(p[9][:20], 2, 70, self.GREY)
+        self.show()
+        self.wait_event(timeout_ms=60000)
+
+    def confirm_clear(self):
+        self.clear()
+        self.header("CLEAR HISTORY?", self.RED)
+        self.ctext("Deletes every run", 22)
+        self.ctext("hold = delete", 42, self.RED)
+        self.ctext("press = cancel", 56, self.GREY)
+        self.show()
+        if self.wait_event(timeout_ms=30000) != "long":
+            return False
+        self.hw.write_file(HISTORY_FILE, "run,clicks,failed,median,mean,sd,min,max,p95,detect\n")
+        self.cfg["runs"] = 0
+        self.cfg["last_median"] = -1.0
+        self.save_settings()
+        self.message("HISTORY", "Cleared", "", self.GREEN, wait=False)
+        self.hw.sleep_ms(800)
+        return True
 
 
 def run(hw, tft, rgb):
