@@ -9,14 +9,12 @@ results.
 
 ![Click-to-photon results](docs/images/click_to_photon.png)
 
-> **Two separate versions:**
->
-> | | **PC app version (v2.1)** - this page | **[LCD version (v3.1)](LCD-Version/README.md)** |
-> |---|---|---|
-> | Board | Raspberry Pi Pico / Pico W | Waveshare RP2040-LCD-0.96 (built-in screen) |
-> | Results on | Windows app | the board's own screen |
-> | Extras | built-in target, latency breakdown, scope, history | one-button menus, scope, flicker test, history, [3D-printed case](LCD-Version/README.md#case) |
-> | Files | `firmware/`, `app/`, `docs/` | everything in [`LCD-Version/`](LCD-Version/) |
+> **Two versions:**
+> - **This page - PC app version (v2):** a Pico / Pico W + sensor, driven by a Windows app with
+>   a built-in target, latency breakdown, scope and history.
+> - **[Standalone version (v3.1)](standalone/README.md):** no app. A Waveshare RP2040-LCD-0.96
+>   with its own screen, the sensor and one button, in a
+>   [3D-printed case](standalone/README.md#case) (56 x 26 x 13 mm) with the sensor on the back.
 >
 > What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 >
@@ -350,11 +348,10 @@ and `firmware/lib/` to the Pico with Thonny.
 ## Project layout
 
 ```
-LCD-Version/                 LCD version (v3.1), self-contained - see LCD-Version/README.md
+standalone/                  v3.1: no PC app - see standalone/README.md
   main.py, lt_*.py           firmware (app, hardware layer, screen driver)
   compiled/                  pre-compiled .mpy files to copy to the board
-  lib/                       USB mouse library for the board
-  case/                      3D-printed case (STL)
+  case/                      3D-printed case: STLs + OpenSCAD source
   tests/sim_standalone.py    runs the app on a simulated board
 CHANGELOG.md                 what changed in each version
 firmware/

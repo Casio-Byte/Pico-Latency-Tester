@@ -1,4 +1,4 @@
-# Latency tester - LCD version (no PC app).
+# Latency tester - standalone version (no PC app).
 # One button + the 160x80 screen on a Waveshare RP2040-LCD-0.96.
 #
 # Button:  short press = start / next / stop      hold (0.7 s) = menu / select / back

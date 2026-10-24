@@ -1,4 +1,4 @@
-# Latency tester - LCD version (no PC app needed).
+# Latency tester v3 - standalone (no PC app needed).
 # Waveshare RP2040-LCD-0.96 + Adafruit ALS-PT19 on GP26 + one push button GP16->GND (pins 21 + 23).
 #
 # Hold the button while plugging in = maintenance mode (no USB mouse, Thonny can

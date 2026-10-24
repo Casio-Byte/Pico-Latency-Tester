@@ -1,4 +1,4 @@
-# Latency tester (LCD version) - hardware layer for the RP2040.
+# Latency tester (standalone) - hardware layer for the RP2040.
 # Everything that touches the chip lives here, so lt_app.py can also run
 # against a simulated board on a PC (tests/sim_standalone.py).
 #

@@ -1,4 +1,4 @@
-"""Runs the LCD-version latency tester (lt_app.py) on a simulated board.
+"""Runs the standalone latency tester (lt_app.py) on a simulated board.
 
 - virtual time (no real waiting), scripted button presses
 - a model PC screen: goes white a random 12-24 ms after each mouse-down,
