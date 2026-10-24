@@ -12,8 +12,11 @@ results.
 > **Two versions:**
 > - **This page - PC app version (v2):** a Pico / Pico W + sensor, driven by a Windows app with
 >   a built-in target, latency breakdown, scope and history.
-> - **[Standalone version (v3)](standalone/README.md):** no app. A Waveshare RP2040-LCD-0.96
->   with its own screen, the sensor and one button.
+> - **[Standalone version (v3.1)](standalone/README.md):** no app. A Waveshare RP2040-LCD-0.96
+>   with its own screen, the sensor and one button, in a
+>   [3D-printed case](standalone/README.md#case) (56 x 26 x 13 mm) with the sensor on the back.
+>
+> What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 >
 > **Status:** the firmware compiles for the Pico's CPU, and the whole system has
 > been tested end to end against a simulated Pico (see [How it was tested](#how-it-was-tested)).
@@ -345,7 +348,12 @@ and `firmware/lib/` to the Pico with Thonny.
 ## Project layout
 
 ```
-standalone/                  v3: no PC app - see standalone/README.md
+standalone/                  v3.1: no PC app - see standalone/README.md
+  main.py, lt_*.py           firmware (app, hardware layer, screen driver)
+  compiled/                  pre-compiled .mpy files to copy to the board
+  case/                      3D-printed case: STLs + OpenSCAD source
+  tests/sim_standalone.py    runs the app on a simulated board
+CHANGELOG.md                 what changed in each version
 firmware/
   main.py                    Pico firmware (PC app version)
   lib/usb/device/            micropython-lib USB device + HID mouse (MIT)
