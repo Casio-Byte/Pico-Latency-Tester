@@ -16,9 +16,9 @@ results.
 >   no app. A Waveshare RP2040-LCD-0.96 with its own screen, the sensor and one
 >   button, in a 3D-printed case.
 >
-> **Status:** the firmware compiles for the Pico's CPU, and the whole system has
-> been tested end to end against a simulated Pico (see [How it was tested](#how-it-was-tested)).
-> It has not yet been run on real hardware - issues and results welcome.
+> **Status: tested and working on real hardware.** It was also tested end to
+> end against a simulated Pico during development (see [How it was tested](#how-it-was-tested)).
+> Issues and results welcome.
 
 ---
 
@@ -276,7 +276,10 @@ rename it into place, check the size, then soft-reset.
 
 ## How it was tested
 
-The hardware wasn't available while this was written, so the system was
+**On real hardware:** built, tested and confirmed working on a real Pico,
+light sensor and PC.
+
+**During development**, before the hardware was available, the system was
 tested in layers:
 
 - **Unit tests** (`app/tests/test_core.cpp`, 72 checks, run with

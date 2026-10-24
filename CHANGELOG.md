@@ -13,5 +13,4 @@ breakdown via clock sync, scope, history, firmware installer.
 
 ---
 
-The PC app version has not been run on real hardware yet - they compile for the
-RP2040 and are tested against simulated boards. Results and issues welcome.
+The PC app version has been tested and confirmed working on real hardware.
