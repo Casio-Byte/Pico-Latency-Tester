@@ -3,5 +3,5 @@ app/third_party/
 app/src/firmware_files.h
 __pycache__/
 *.mpy
-!standalone/compiled/*.mpy
-standalone/tests/out/
+!LCD-Version/compiled/*.mpy
+LCD-Version/tests/out/

@@ -54,7 +54,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## micropython-lib (firmware/lib/usb) - https://github.com/micropython/micropython-lib
+## micropython-lib (firmware/lib/usb, LCD-Version/lib/usb) - https://github.com/micropython/micropython-lib
 
 ```
 micropython-lib consists of multiple modules from different sources and

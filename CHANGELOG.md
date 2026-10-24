@@ -1,6 +1,15 @@
 # Changelog
 
-## v3.1 - standalone (October 2026)
+## Repository layout (October 2026)
+
+- The LCD version now lives on its own in [`LCD-Version/`](LCD-Version/), with
+  its own README, USB library, screenshots and case. The PC app version stays
+  at the top level (`firmware/`, `app/`, `docs/`).
+- New case for the LCD version: `LCD-Version/case/Pico_Latency_Tester_LCD.stl`
+  (case + button cap, strap loops, sensor hole in the back). The earlier
+  OpenSCAD case is kept in `LCD-Version/case/parametric/`.
+
+## v3.1 - LCD version (October 2026)
 
 Hardware: Waveshare RP2040-LCD-0.96 + Adafruit ALS-PT19 + one 6x6 mm button.
 
@@ -27,13 +36,13 @@ Hardware: Waveshare RP2040-LCD-0.96 + Adafruit ALS-PT19 + one 6x6 mm button.
   with older settings switch once; later choices are kept.
 - An out-of-memory error in any menu item now shows a message instead of
   crashing.
-- **3D-printed case** (`standalone/case/`): screen window and button hole in
+- **3D-printed case** (now `LCD-Version/case/parametric/`): screen window and button hole in
   the lid, sensor pocket under the board looking out of the back, board on a
   ledge with gaps for solder joints, push-fit lid, USB-C slot.
 - Simulator covers 84 steps, including the flicker test on flickering, steady
   and dark screens, sensor-view clicks and clearing history.
 
-## v3.0 - standalone
+## v3.0 - LCD version
 
 First version without a PC app: one-button menus, automatic runs with
 calibration, results pages (median, histogram, every click, detail), response

@@ -1,4 +1,8 @@
-# Pico Latency Tester 3 - standalone
+# Pico Latency Tester - LCD Version
+
+> This is the **LCD version** (v3.1): everything runs on the board, no PC app.
+> It is self-contained - all its files are in this folder. The PC app version
+> is separate: see the [main page](../README.md).
 
 **No PC app.** A Waveshare RP2040-LCD-0.96, a light sensor and one button make a
 pocket click-to-photon tester. It clicks your mouse, watches the screen, and
@@ -6,8 +10,8 @@ shows the results on its own display.
 
 | | | |
 |---|---|---|
-| ![Home](../docs/images/standalone/01_home.png) | ![Running](../docs/images/standalone/03_running.png) | ![Median](../docs/images/standalone/04_results_median.png) |
-| ![Histogram](../docs/images/standalone/05_results_histogram.png) | ![Every click](../docs/images/standalone/06_results_every_click.png) | ![Menu](../docs/images/standalone/08_menu.png) |
+| ![Home](images/screens/01_home.png) | ![Running](images/screens/03_running.png) | ![Median](images/screens/04_results_median.png) |
+| ![Histogram](images/screens/05_results_histogram.png) | ![Every click](images/screens/06_results_every_click.png) | ![Menu](images/screens/08_menu.png) |
 
 > **Status:** compiled for the RP2040 and tested end to end on a simulated
 > board (see [Testing](#testing)). Not yet run on real hardware.
@@ -33,41 +37,41 @@ The screen is built in. Don't connect anything to GP8-GP12 or GP25 - the screen 
 
 ## Case
 
-A 3D-printed case, about 56 x 26 x 13 mm, in [`case/`](case/): the screen
-looks out of the lid, the light sensor looks out of the flat back, so you hold
-the back against the monitor.
+[`case/Pico_Latency_Tester_LCD.stl`](case/Pico_Latency_Tester_LCD.stl): the
+screen looks out through a window in the front, the button sits beside it, the
+light sensor looks out through a hole in the middle of the back, and the loops
+on the sides take a strap to hold it against the monitor. About 56 x 27 x 16.5 mm
+(40 mm across the strap loops).
+
+| Front | Side (USB-C end) | Back |
+|---|---|---|
+| ![Front](images/case/front.png) | ![Side](images/case/side.png) | ![Back](images/case/back.png) |
+
+The file holds two parts: the case and the button cap. In the slicer use
+*Split to objects* (or *Split to parts*) to print and place them separately.
+
+<details>
+<summary>Earlier adjustable case (OpenSCAD)</summary>
+
+[`case/parametric/`](case/parametric/) has the first case design: a two-part
+push-fit box (56 x 26 x 13 mm) with every size a setting in
+`latency_tester_v3_case.scad`. It is kept for reference; the model above is the
+current one.
 
 | Assembled | Inside | Back |
 |---|---|---|
-| ![Closed](../docs/images/case/closed.png) | ![Open](../docs/images/case/open.png) | ![Back](../docs/images/case/back.png) |
+| ![Closed](images/case-parametric/closed.png) | ![Open](images/case-parametric/open.png) | ![Back](images/case-parametric/back.png) |
 
-- **`latency_v3_base.stl`** - the board rests on a 2 mm ledge round the inside
-  (with gaps where the button legs and sensor wires are soldered underneath);
-  open slot in the end wall for the USB-C plug; sensor pocket under the board.
-- **`latency_v3_lid.stl`** - screen window, hole for the button, rails that
-  hold the board down. Push fit, no screws. Already face-down for printing.
-- **`latency_tester_v3_case.scad`** - the OpenSCAD source; every size is a
-  setting at the top.
-
-Print both flat side down, no supports. The button is soldered straight onto
-the board (legs in pins 21 and 23, body towards the middle) and its stem comes
-up through the lid. The ALS-PT19 breakout goes chip-down into the pocket: it
-rests on a ledge, the chip sits in a recess over a 2 mm light hole, and a peg
-through its mounting hole lines it up.
-
-Waveshare only publishes the board drawing as an image, so measure your board
-and change these in the `.scad` if they differ: `scr_x` (USB end to the screen
-centre), `btn_x` / `btn_y` (button stem), `tact_h` (button height), `under`
-(4 mm under the board - set 9.5 if your board has header pins).
+</details>
 
 ## Install
 
 1. Hold **BOOT** and plug the board in. In Thonny: *Install MicroPython* ->
    **Raspberry Pi Pico / Pico H** (the board is an RP2040 with 2 MB flash).
 2. Copy to the board with Thonny (*View -> Files*, right-click -> *Upload to /*):
-   - `firmware/lib/` from this repo (the USB mouse library) -> `/lib`
-   - **either** everything in `standalone/compiled/` (recommended - loads faster, uses less RAM)
-   - **or** `main.py`, `lt_app.py`, `lt_hw.py`, `lt_display.py` from `standalone/`
+   - `lib/` from this folder (the USB mouse library) -> `/lib`
+   - **either** everything in `compiled/` (recommended - loads faster, uses less RAM)
+   - **or** `main.py`, `lt_app.py`, `lt_hw.py`, `lt_display.py`
 3. Unplug and plug it back in. The screen shows *LATENCY TESTER*; the dot in the
    bottom-right turns green once the PC has accepted it as a mouse.
 
@@ -90,7 +94,7 @@ If the picture is upside down, use *Flip screen* in the menu.
 
 | Countdown | Detail | History |
 |---|---|---|
-| ![Countdown](../docs/images/standalone/02_countdown.png) | ![Detail](../docs/images/standalone/07_results_detail.png) | ![History](../docs/images/standalone/17_history.png) |
+| ![Countdown](images/screens/02_countdown.png) | ![Detail](images/screens/07_results_detail.png) | ![History](images/screens/17_history.png) |
 
 ### Menu
 
@@ -117,8 +121,8 @@ with Thonny: `history.csv` (one summary line per run) and `last_run.csv`
 
 | Response scope | Flicker | Sensor view |
 |---|---|---|
-| ![Scope](../docs/images/standalone/14_response_scope.png) | ![Flicker](../docs/images/standalone/15_flicker.png) | ![Sensor](../docs/images/standalone/16_sensor_view.png) |
-| ![No flicker](../docs/images/standalone/15b_flicker_none.png) | ![History](../docs/images/standalone/17b_history_run.png) | ![Clear](../docs/images/standalone/17d_history_confirm.png) |
+| ![Scope](images/screens/14_response_scope.png) | ![Flicker](images/screens/15_flicker.png) | ![Sensor](images/screens/16_sensor_view.png) |
+| ![No flicker](images/screens/15b_flicker_none.png) | ![History](images/screens/17b_history_run.png) | ![Clear](images/screens/17d_history_confirm.png) |
 
 ## How detection works
 
@@ -166,7 +170,9 @@ lt_app.py        the app: one-button menus, runs, results, scope, flicker, histo
 lt_hw.py         hardware: viper timing loops, ADC, button, USB mouse, files
 lt_display.py    ST7735S driver for the built-in 160x80 screen
 target.html      a simple click target for the PC
-case/            3D-printed case: STLs + OpenSCAD source
+lib/             micropython-lib USB device + HID mouse (MIT) - copy to /lib
+case/            3D-printed case (Pico_Latency_Tester_LCD.stl); parametric/ = earlier OpenSCAD design
+images/          screenshots and case renders
 compiled/        pre-compiled .mpy versions (build_mpy.sh)
 tests/sim_standalone.py   runs lt_app.py on a simulated board, saves screenshots
 ```
